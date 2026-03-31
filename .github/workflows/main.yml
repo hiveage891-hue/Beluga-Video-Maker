@@ -33,8 +33,10 @@ jobs:
         pyinstaller --noconfirm --onefile --windowed --name "BelugaVideoMaker" \
         --collect-all moviepy \
         --collect-all imageio \
+        --add-data "scripts:scripts" \
+        --hidden-import "scripts.editor_video" \
+        --hidden-import "scripts.desenhador" \
         gui.py
-
     - name: Prepare Package
       shell: bash
       run: |
