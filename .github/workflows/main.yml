@@ -9,7 +9,8 @@ jobs:
   build:
     strategy:
       matrix:
-        os: [ubuntu-latest, windows-latest]
+        # Mudando ubuntu-latest para ubuntu-20.04
+        os: [ubuntu-20.04, windows-latest] 
     runs-on: ${{ matrix.os }}
 
     steps:
@@ -24,13 +25,18 @@ jobs:
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip
-        # Instalando especificamente a v1.0.3 se você preferir o código antigo (mais estável para PyInstaller)
-        pip install customtkinter pillow moviepy==1.0.3 numpy pyinstaller
+        # Instalando moviepy e garantindo imageio
+        pip install customtkinter pillow moviepy==1.0.3 numpy pyinstaller imageio
 
     - name: Build Executable
       run: |
-        pyinstaller --noconfirm --onefile --windowed --name "BelugaVideoMaker" gui.py
-
+        pyinstaller --noconfirm --onefile --windowed \
+        --name "BelugaVideoMaker" \
+        --collect-all moviepy \
+        --collect-metadata imageio \
+        --collect-metadata moviepy \
+        gui.py
+        
     - name: Prepare Package (Linux)
       if: matrix.os == 'ubuntu-latest'
       run: |
@@ -42,20 +48,14 @@ jobs:
 
     - name: Prepare Package (Windows)
       if: matrix.os == 'windows-latest'
-      shell: bash  # Vamos usar bash no Windows para evitar o erro de barras do PowerShell
+      shell: bash
       run: |
-        # Criar a estrutura limpa
         mkdir -p dist/package/assets dist/package/input dist/package/scripts
-        
-        # Copiar executável
         cp dist/BelugaVideoMaker.exe dist/package/
-        
-        # Copiar pastas (o asterisco garante o conteúdo)
-        cp -r assets/* dist/package/assets/
-        cp -r input/* dist/package/input/
-        cp -r scripts/* dist/package/scripts/
-        
-        # Zipar usando o comando 'tar' (que o Windows moderno aceita e respeita pastas)
+        # Copia apenas se as pastas existirem para evitar erro
+        cp -r assets/* dist/package/assets/ 2>/dev/null || :
+        cp -r input/* dist/package/input/ 2>/dev/null || :
+        cp -r scripts/* dist/package/scripts/ 2>/dev/null || :
         cd dist/package && tar -a -c -f ../Beluga-Video-Maker-Windows.zip *
     - name: Upload Artifacts
       uses: actions/upload-artifact@v4
