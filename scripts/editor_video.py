@@ -1,4 +1,6 @@
-from moviepy.editor import ImageClip, concatenate_videoclips, AudioFileClip
+from moviepy.video.VideoClip import ImageClip
+from moviepy.video.compositing.concatenate import concatenate_videoclips
+from moviepy.audio.io.AudioFileClip import AudioFileClip
 import os
 import numpy as np
 
