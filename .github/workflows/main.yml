@@ -9,8 +9,7 @@ jobs:
   build:
     strategy:
       matrix:
-        # Mudando ubuntu-latest para ubuntu-20.04
-        os: [ubuntu-20.04, windows-latest] 
+        os: [ubuntu-20.04, windows-latest]
     runs-on: ${{ matrix.os }}
 
     steps:
@@ -27,37 +26,26 @@ jobs:
         python -m pip install --upgrade pip
         pip install customtkinter pillow moviepy==1.0.3 numpy pyinstaller imageio
 
-    - name: Build Executable (Linux)
-      if: matrix.os == 'ubuntu-20.04'
+    - name: Build Executable
+      shell: bash
       run: |
-        pyinstaller --noconfirm --onefile --windowed --name "BelugaVideoMaker" --collect-all moviepy --collect-metadata imageio --collect-metadata moviepy gui.py
+        # Usando a marreta: --collect-all puxa TUDO da lib e evita erros de metadata
+        pyinstaller --noconfirm --onefile --windowed --name "BelugaVideoMaker" \
+        --collect-all moviepy \
+        --collect-all imageio \
+        gui.py
 
-    - name: Build Executable (Windows)
-      if: matrix.os == 'windows-latest'
-      run: |
-        & pyinstaller --noconfirm --onefile --windowed --name "BelugaVideoMaker" --collect-all moviepy --collect-metadata imageio --collect-metadata moviepy gui.py
-      shell: powershell
-
-    - name: Prepare Package (Linux)
-      if: matrix.os == 'ubuntu-20.04'
-      run: |
-        mkdir -p dist/package/assets dist/package/input dist/package/scripts
-        cp dist/BelugaVideoMaker dist/package/
-        cp -r assets/* dist/package/assets/ 2>/dev/null || :
-        cp -r input/* dist/package/input/ 2>/dev/null || :
-        cp -r scripts/* dist/package/scripts/ 2>/dev/null || :
-        cd dist/package && tar -a -c -f ../Beluga-Video-Maker-Linux.zip *
-
-    - name: Prepare Package (Windows)
-      if: matrix.os == 'windows-latest'
+    - name: Prepare Package
       shell: bash
       run: |
         mkdir -p dist/package/assets dist/package/input dist/package/scripts
-        cp dist/BelugaVideoMaker.exe dist/package/
+        # No Windows o executável tem .exe, no Linux não. O wildcard * resolve.
+        cp dist/BelugaVideoMaker* dist/package/
         cp -r assets/* dist/package/assets/ 2>/dev/null || :
         cp -r input/* dist/package/input/ 2>/dev/null || :
         cp -r scripts/* dist/package/scripts/ 2>/dev/null || :
-        cd dist/package && tar -a -c -f ../Beluga-Video-Maker-Windows.zip *
+        cd dist/package && tar -a -c -f ../Beluga-Video-Maker-${{ matrix.os }}.zip *
+
     - name: Upload Artifacts
       uses: actions/upload-artifact@v4
       with:
@@ -74,7 +62,6 @@ jobs:
       uses: actions/download-artifact@v4
       with:
         path: ./artifacts
-
     - name: Create Release
       uses: softprops/action-gh-release@v2
       with:
