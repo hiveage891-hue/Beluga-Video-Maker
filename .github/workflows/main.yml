@@ -5,6 +5,10 @@ on:
     branches: [ "main" ]
   workflow_dispatch:
 
+# ESSA É A CHAVE QUE ESTÁ FALTANDO:
+permissions:
+  contents: write
+
 jobs:
   build-windows:
     runs-on: windows-latest
@@ -26,7 +30,6 @@ jobs:
     - name: Build Executable
       shell: bash
       run: |
-        # --collect-all garante que o MoviePy e ImageIO funcionem sem erros de metadados
         pyinstaller --noconfirm --onefile --windowed --name "BelugaVideoMaker" \
         --collect-all moviepy \
         --collect-all imageio \
@@ -35,23 +38,15 @@ jobs:
     - name: Prepare Package
       shell: bash
       run: |
-        # Criando a estrutura de pastas real
         mkdir -p dist/package/assets dist/package/input dist/package/scripts
-        
-        # Movendo o executável
         cp dist/BelugaVideoMaker.exe dist/package/
-        
-        # Copiando as pastas e conteúdos (ignorando erros se estiverem vazias)
         cp -r assets/* dist/package/assets/ 2>/dev/null || :
         cp -r input/* dist/package/input/ 2>/dev/null || :
         cp -r scripts/* dist/package/scripts/ 2>/dev/null || :
-        
-        # Criando o ZIP com a estrutura de pastas correta
         cd dist/package && tar -a -c -f ../Beluga-Video-Maker-Windows.zip *
 
     - name: Create Release
       uses: softprops/action-gh-release@v2
-      if: startsWith(github.ref, 'refs/tags/') || github.event_name == 'workflow_dispatch' || github.ref == 'refs/heads/main'
       with:
         tag_name: v1.2.${{ github.run_number }}
         name: Release Windows v1.2.${{ github.run_number }}
