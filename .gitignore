@@ -1,0 +1,15 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+venv/
+.env
+
+# Projeto Beluga
+output/frames/*
+output/video/*
+crashlog.txt
+*.json
+
+# Sistema
+.DS_Store
