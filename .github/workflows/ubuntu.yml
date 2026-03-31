@@ -1,0 +1,53 @@
+name: Build and Release
+
+on:
+  push:
+    tags:
+      - 'v*' # Dispara quando você cria uma tag como v1.0, v1.1, etc.
+
+jobs:
+  build:
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest] # Cria versões para Linux e Windows
+    runs-on: ${{ matrix.os }}
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v3
+
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.10'
+
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install customtkinter pillow moviepy numpy pyinstaller
+
+    - name: Build with PyInstaller
+      run: |
+        pyinstaller --noconfirm --onefile --windowed --name "BelugaVideoMaker-${{ matrix.os }}" --add-data "scripts${{ matrix.os == 'windows-latest' && ';' || ':' }}scripts" --add-data "assets${{ matrix.os == 'windows-latest' && ';' || ':' }}assets" --add-data "input${{ matrix.os == 'windows-latest' && ';' || ':' }}input" gui.py
+
+    - name: Upload Artifacts
+      uses: actions/upload-artifact@v3
+      with:
+        name: binary-${{ matrix.os }}
+        path: dist/BelugaVideoMaker*
+
+  release:
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+    - name: Download Artifacts
+      uses: actions/download-artifact@v3
+
+    - name: Create Release
+      uses: softprops/action-gh-release@v1
+      with:
+        files: |
+          binary-ubuntu-latest/*
+          binary-windows-latest/*
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
