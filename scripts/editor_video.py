@@ -37,11 +37,14 @@ def montar_video_final(frames, durations, output_path):
 
     # Junta todos os clipes individuais em ordem
     final_clip = concatenate_videoclips(clips, method="compose")
-
+    
     # Renderiza o vídeo final
     final_clip.write_videofile(
         output_path,
+        filename,
         fps=24,
+        logger=None,   # Isso mata o erro 'NoneType' object has no attribute 'write'
+        verbose=False  # Garante que ele não tente falar nada no terminal
         codec="libx264",
         audio_codec="aac",  # Necessário para processar o som corretamente
     )
