@@ -3,22 +3,21 @@ name: Build and Release
 on:
   push:
     branches: [ "main" ]
-    tags:
-      - 'v*' # Dispara quando você cria uma tag como v1.0, v1.1, etc.
   workflow_dispatch:
+
 jobs:
   build:
     strategy:
       matrix:
-        os: [ubuntu-latest, windows-latest] # Cria versões para Linux e Windows
+        os: [ubuntu-latest, windows-latest]
     runs-on: ${{ matrix.os }}
 
     steps:
     - name: Checkout code
-      uses: actions/checkout@v3
+      uses: actions/checkout@v4
 
     - name: Set up Python
-      uses: actions/setup-python@v4
+      uses: actions/setup-python@v5
       with:
         python-version: '3.10'
 
@@ -32,7 +31,7 @@ jobs:
         pyinstaller --noconfirm --onefile --windowed --name "BelugaVideoMaker-${{ matrix.os }}" --add-data "scripts${{ matrix.os == 'windows-latest' && ';' || ':' }}scripts" --add-data "assets${{ matrix.os == 'windows-latest' && ';' || ':' }}assets" --add-data "input${{ matrix.os == 'windows-latest' && ';' || ':' }}input" gui.py
 
     - name: Upload Artifacts
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: binary-${{ matrix.os }}
         path: dist/BelugaVideoMaker*
@@ -40,15 +39,18 @@ jobs:
   release:
     needs: build
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
     steps:
     - name: Download Artifacts
-      uses: actions/download-artifact@v3
+      uses: actions/download-artifact@v4
+      with:
+        path: ./artifacts
 
     - name: Create Release
-      uses: softprops/action-gh-release@v1
+      uses: softprops/action-gh-release@v2
       with:
-        files: |
-          binary-ubuntu-latest/*
-          binary-windows-latest/*
+        tag_name: v1.0.${{ github.run_number }}
+        files: ./artifacts/**/*
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
