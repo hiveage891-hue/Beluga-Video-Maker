@@ -42,14 +42,22 @@ jobs:
     - name: Prepare Package (Windows)
       if: matrix.os == 'windows-latest'
       run: |
+        # Criando a estrutura de pastas primeiro
         mkdir dist\Beluga-Windows
+        mkdir dist\Beluga-Windows\assets
+        mkdir dist\Beluga-Windows\input
+        mkdir dist\Beluga-Windows\scripts
+        
+        # Copiando o executável
         copy dist\BelugaVideoMaker.exe dist\Beluga-Windows\
-        # xcopy /E garante que subpastas e arquivos internos sejam copiados
-        xcopy /E /I assets dist\Beluga-Windows\assets
-        xcopy /E /I input dist\Beluga-Windows\input
-        xcopy /E /I scripts dist\Beluga-Windows\scripts
-        powershell Compress-Archive -Path dist\Beluga-Windows\* -DestinationPath dist\Beluga-Video-Maker-Windows.zip
-
+        
+        # Copiando o CONTEÚDO para dentro das pastas (o /S /E é a chave aqui)
+        xcopy /S /E /Y assets\* dist\Beluga-Windows\assets\
+        xcopy /S /E /Y input\* dist\Beluga-Windows\input\
+        xcopy /S /E /Y scripts\* dist\Beluga-Windows\scripts\
+        
+        # Zipando a pasta pai (Beluga-Windows) inteira
+        powershell Compress-Archive -Path dist\Beluga-Windows -DestinationPath dist\Beluga-Video-Maker-Windows.zip
     - name: Upload Artifacts
       uses: actions/upload-artifact@v4
       with:
