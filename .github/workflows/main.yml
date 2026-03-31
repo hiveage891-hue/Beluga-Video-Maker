@@ -1,4 +1,4 @@
-name: Build and Release
+name: Build and Release Zip
 
 on:
   push:
@@ -26,15 +26,35 @@ jobs:
         python -m pip install --upgrade pip
         pip install customtkinter pillow moviepy numpy pyinstaller
 
-    - name: Build with PyInstaller
+    - name: Build Executable
       run: |
-        pyinstaller --noconfirm --onefile --windowed --name "BelugaVideoMaker-${{ matrix.os }}" --add-data "scripts${{ matrix.os == 'windows-latest' && ';' || ':' }}scripts" --add-data "assets${{ matrix.os == 'windows-latest' && ';' || ':' }}assets" --add-data "input${{ matrix.os == 'windows-latest' && ';' || ':' }}input" gui.py
+        pyinstaller --noconfirm --onefile --windowed --name "BelugaVideoMaker" gui.py
+
+    - name: Prepare Package (Linux)
+      if: matrix.os == 'ubuntu-latest'
+      run: |
+        mkdir -p dist/Beluga-Linux
+        cp dist/BelugaVideoMaker dist/Beluga-Linux/
+        # Copia as pastas e todo o conteúdo de forma recursiva
+        cp -r assets input scripts dist/Beluga-Linux/ 
+        cd dist && zip -r Beluga-Video-Maker-Linux.zip Beluga-Linux/
+
+    - name: Prepare Package (Windows)
+      if: matrix.os == 'windows-latest'
+      run: |
+        mkdir dist\Beluga-Windows
+        copy dist\BelugaVideoMaker.exe dist\Beluga-Windows\
+        # xcopy /E garante que subpastas e arquivos internos sejam copiados
+        xcopy /E /I assets dist\Beluga-Windows\assets
+        xcopy /E /I input dist\Beluga-Windows\input
+        xcopy /E /I scripts dist\Beluga-Windows\scripts
+        powershell Compress-Archive -Path dist\Beluga-Windows\* -DestinationPath dist\Beluga-Video-Maker-Windows.zip
 
     - name: Upload Artifacts
       uses: actions/upload-artifact@v4
       with:
-        name: binary-${{ matrix.os }}
-        path: dist/BelugaVideoMaker*
+        name: zip-${{ matrix.os }}
+        path: dist/*.zip
 
   release:
     needs: build
@@ -50,7 +70,8 @@ jobs:
     - name: Create Release
       uses: softprops/action-gh-release@v2
       with:
-        tag_name: v1.0.${{ github.run_number }}
-        files: ./artifacts/**/*
+        tag_name: v1.1.${{ github.run_number }}
+        name: Release v1.1.${{ github.run_number }}
+        files: ./artifacts/**/*.zip
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
