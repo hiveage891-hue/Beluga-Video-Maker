@@ -2,9 +2,10 @@ name: Build and Release
 
 on:
   push:
+    branches: [ "main" ]
     tags:
       - 'v*' # Dispara quando você cria uma tag como v1.0, v1.1, etc.
-
+  workflow_dispatch:
 jobs:
   build:
     strategy:
