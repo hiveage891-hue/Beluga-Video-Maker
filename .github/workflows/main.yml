@@ -25,26 +25,28 @@ jobs:
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip
-        # Instalando moviepy e garantindo imageio
         pip install customtkinter pillow moviepy==1.0.3 numpy pyinstaller imageio
 
-    - name: Build Executable
+    - name: Build Executable (Linux)
+      if: matrix.os == 'ubuntu-20.04'
       run: |
-        pyinstaller --noconfirm --onefile --windowed \
-        --name "BelugaVideoMaker" \
-        --collect-all moviepy \
-        --collect-metadata imageio \
-        --collect-metadata moviepy \
-        gui.py
-        
+        pyinstaller --noconfirm --onefile --windowed --name "BelugaVideoMaker" --collect-all moviepy --collect-metadata imageio --collect-metadata moviepy gui.py
+
+    - name: Build Executable (Windows)
+      if: matrix.os == 'windows-latest'
+      run: |
+        & pyinstaller --noconfirm --onefile --windowed --name "BelugaVideoMaker" --collect-all moviepy --collect-metadata imageio --collect-metadata moviepy gui.py
+      shell: powershell
+
     - name: Prepare Package (Linux)
-      if: matrix.os == 'ubuntu-latest'
+      if: matrix.os == 'ubuntu-20.04'
       run: |
-        mkdir -p dist/Beluga-Linux
-        cp dist/BelugaVideoMaker dist/Beluga-Linux/
-        # Copia as pastas e todo o conteúdo de forma recursiva
-        cp -r assets input scripts dist/Beluga-Linux/ 
-        cd dist && zip -r Beluga-Video-Maker-Linux.zip Beluga-Linux/
+        mkdir -p dist/package/assets dist/package/input dist/package/scripts
+        cp dist/BelugaVideoMaker dist/package/
+        cp -r assets/* dist/package/assets/ 2>/dev/null || :
+        cp -r input/* dist/package/input/ 2>/dev/null || :
+        cp -r scripts/* dist/package/scripts/ 2>/dev/null || :
+        cd dist/package && tar -a -c -f ../Beluga-Video-Maker-Linux.zip *
 
     - name: Prepare Package (Windows)
       if: matrix.os == 'windows-latest'
@@ -52,7 +54,6 @@ jobs:
       run: |
         mkdir -p dist/package/assets dist/package/input dist/package/scripts
         cp dist/BelugaVideoMaker.exe dist/package/
-        # Copia apenas se as pastas existirem para evitar erro
         cp -r assets/* dist/package/assets/ 2>/dev/null || :
         cp -r input/* dist/package/input/ 2>/dev/null || :
         cp -r scripts/* dist/package/scripts/ 2>/dev/null || :
