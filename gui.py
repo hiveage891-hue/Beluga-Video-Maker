@@ -1,12 +1,21 @@
 import customtkinter as ctk
 import json
-import os
 import threading
 import traceback
-import sys
 from tkinter import filedialog
 from PIL import Image
+import os
+import sys
 
+# Pega a pasta onde o executável está rodando
+if getattr(sys, 'frozen', False):
+    BASE_DIR = os.path.dirname(sys.executable)
+else:
+    BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+
+# Exemplo de como carregar as pastas agora:
+assets_path = os.path.join(BASE_DIR, "assets")
+input_path = os.path.join(BASE_DIR, "input")
 # Import scripts
 try:
     from scripts.desenhador import desenhar_conversa
